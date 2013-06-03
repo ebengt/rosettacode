@@ -1,0 +1,11 @@
+{application, erlang_tasks,
+ [
+  {description, "Rosetta code Erlang modules"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
