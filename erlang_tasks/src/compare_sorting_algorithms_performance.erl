@@ -3,18 +3,24 @@
 -export( [task/0] ).
 
 task() ->
-	N = 5,
-	Sort_results = time_sort_functions([bubble_sort, insertion_sort, quick_sort], N ),
-	PNG = egd_chart:graph( Sort_results ),
-	file:write_file( "compare_sorting_algorithms_performance.png", PNG ).
+	Ns = [100, 1000, 10000],
+	Lists = [{"ones", fun list_of_ones/1, Ns}, {"ranges", fun list_of_ranges/1, Ns}, {"shuffleds", fun list_of_shuffleds/1, Ns}],
+	Sorts = [{bubble_sort, fun bubble_sort:list/1}, {insertion_sort, fun sort:insertion/1}, {iquick_sort, fun quicksort:qsort/1}],
+	Results = [time_list(X, Sorts) || X <- Lists],
+	[file:write_file(X++".png", egd_chart:graph(Y, [{x_label,  "log N"}, {y_label, "log ms"}])) || {X, Y} <- Results].
 
 
-bubble_sort( List, N ) ->
-	{Time, _Result} = timer:tc( fun() -> bubble_sort:list( List ) end ),
-	{N, Time}.
+list_of_ones( N ) -> [1 || _X <- lists:seq(1, N)].
+list_of_ranges( N ) -> [X || X <- lists:seq(1, N)].
+list_of_shuffleds( N ) -> [random:uniform(N) || _X <- lists:seq(1, N)].
 
-time_sort_functions( _Funs, N ) ->
-	Ones = [1 || _X <- lists:seq(1, N)],
-	Ranges = [X || X <- lists:seq(1, N)],
-	Shuffleds = [random:uniform(N) || _X <- lists:seq(1, N)],
-	X_Ys = [bubble_sort(X, N) || X <- [Ones, Ranges, Shuffleds]].
+time_list( {List, List_fun, Values}, Sorts ) ->
+	Results = [{Sort, time_sort(Sort_fun, List_fun, Values)} || {Sort, Sort_fun} <- Sorts],
+	{List, Results}.
+
+time_sort( Sort_fun, List_fun, Values ) ->
+	[time(Sort_fun, List_fun, X) || X <- Values].
+
+time( Fun, List_fun, N ) ->
+	{Time, _Result} = timer:tc( fun() -> Fun( List_fun(N) ) end ),
+	{math:log10(N), math:log10(Time)}.

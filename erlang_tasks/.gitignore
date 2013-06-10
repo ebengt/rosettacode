@@ -1,4 +1,3 @@
-rebar.config.not_used
 ebin/
 deps/
 test/
