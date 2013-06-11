@@ -5,7 +5,7 @@
  
 main() -> 
    application:start(inets), 
-ok = httpc:set_options( [{proxy, {{"www-proxy.ericsson.se", 8080}, []}}] ),
+%ok = httpc:set_options( [{proxy, {{"www-proxy.ericsson.se", 8080}, []}}] ),
    Titles = read_titles(empty),
    Result = lists:foldl(fun(Title,Acc) -> Acc + calculate_one(Title) end, 0, Titles),
    io:format("Total: ~p examples.\n",[Result]),

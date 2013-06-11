@@ -5,7 +5,7 @@
 
 init() ->
 	application:start( inets ),
-	httpc:set_options( [{proxy, {{"www-proxy.ericsson.se", 8080}, []}}] ).
+	init_ericsson_proxy( is_ericsson() ).
 
 per_language( Language ) ->
 	ok = init(),
@@ -20,6 +20,12 @@ rosetta_code_list_of( Category ) ->
 	title_contents( URL, "", [] ).
 
 
+init_ericsson_proxy( true ) -> httpc:set_options( [{proxy, {{"www-proxy.ericsson.se", 8080}, []}}] );
+init_ericsson_proxy( false ) -> ok.
+
+is_ericsson() ->
+	Environments_variables = [H || [H|_] <- [string:tokens(X, "=") || X <- os:getenv()]],
+	lists:member( "ARC_RELEASE", Environments_variables ) andalso lists:member( "CCHOME", Environments_variables ).
 
 title_contents( URL, Continue, Acc ) ->
 	{ok, {{_HTTP,200,"OK"}, _Headers, Body}} = httpc:request( URL ++ Continue ),
