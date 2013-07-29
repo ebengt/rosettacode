@@ -11,10 +11,7 @@ task() ->
 	Actual_dict = actual_distribution( Fibonaccis ),
 	Keys = lists:sort( dict:fetch_keys( Actual_dict) ),
 	io:fwrite( "Digit	Actual	Benfords expected~n" ),
-	lists:foreach( fun( N ) ->
-			io:fwrite( "~p	~p	~p~n", [N, dict:fetch(N, Actual_dict) / Total, distribution(N)] )
-		end,
-		Keys ).
+	[io:fwrite("~p	~p	~p~n", [X, dict:fetch(X, Actual_dict) / Total, distribution(X)]) || X <- Keys].
 
 
 
