@@ -46,16 +46,21 @@ is_all_multi_house_rules_ok( House1, House2, House3, House4, House5 ) ->
 	andalso is_rule_16_ok( House1, House2, House3, House4, House5 ).
 
 is_all_single_house_rules_ok( Colour, Drink, Nationality, Number, Pet, Smoke ) ->
-	is_rule_2_ok( Nationality, Colour )
-	andalso is_rule_3_ok( Nationality, Pet )
-	andalso is_rule_4_ok( Nationality, Drink )
-	andalso is_rule_6_ok( Drink, Colour )
-	andalso is_rule_7_ok( Smoke, Pet )
-	andalso is_rule_8_ok( Colour, Smoke )
-	andalso is_rule_9_ok( Number, Drink )
-	andalso is_rule_10_ok( Nationality, Number )
-	andalso is_rule_13_ok( Smoke, Drink )
-	andalso is_rule_14_ok( Nationality, Smoke ).
+	is_rule_ok( {rule_number, 2}, {Nationality, english}, {Colour, red})
+	andalso is_rule_ok( {rule_number, 3}, {Nationality, swedish}, {Pet, dog})
+	andalso is_rule_ok( {rule_number, 4}, {Nationality, danish}, {Drink, tea})
+	andalso is_rule_ok( {rule_number, 6}, {Drink, coffe}, {Colour, green})
+	andalso is_rule_ok( {rule_number, 7}, {Smoke, 'pall mall'}, {Pet, birds})
+	andalso is_rule_ok( {rule_number, 8}, {Colour, yellow}, {Smoke, dunhill})
+	andalso is_rule_ok( {rule_number, 9}, {Number, 3}, {Drink, milk})
+	andalso is_rule_ok( {rule_number, 10}, {Nationality, norveigan}, {Number, 1})
+	andalso is_rule_ok( {rule_number, 13}, {Smoke, 'blue master'}, {Drink, beer})
+	andalso is_rule_ok( {rule_number, 14}, {Nationality, german}, {Smoke, prince}).
+
+is_rule_ok( _Rule_number, {A, A}, {B, B} ) -> true;
+is_rule_ok( _Rule_number, _A, {B, B} ) -> false;
+is_rule_ok( _Rule_number, {A, A}, _B ) -> false;
+is_rule_ok( _Rule_number, _A, _B ) -> true.
 
 is_rule_1_ok( #house{number=1}=H1,  #house{number=2}=H2,  #house{number=3}=H3,  #house{number=4}=H4,  #house{number=5}=H5  ) ->
 	is_all_different( [H1#house.colour, H2#house.colour, H3#house.colour, H4#house.colour, H5#house.colour] )
@@ -65,51 +70,11 @@ is_rule_1_ok( #house{number=1}=H1,  #house{number=2}=H2,  #house{number=3}=H3,  
 	andalso is_all_different( [H1#house.smoke, H2#house.smoke, H3#house.smoke, H4#house.smoke, H5#house.smoke] );
 is_rule_1_ok( _House1,  _House2,  _House3,  _House4,  _House5  ) -> false.
 
-is_rule_2_ok( english, red ) -> true;
-is_rule_2_ok( english, _Colour ) -> false;
-is_rule_2_ok( _Nationality, red ) -> false;
-is_rule_2_ok( _Nationality, _Colour ) -> true.
-
-is_rule_3_ok( swedish, dog ) -> true;
-is_rule_3_ok( swedish, _Pet ) -> false;
-is_rule_3_ok( _Nationality, dog ) -> false;
-is_rule_3_ok( _Nationality, _Pet ) -> true.
-
-is_rule_4_ok( danish, tea ) -> true;
-is_rule_4_ok( danish, _Drink ) -> false;
-is_rule_4_ok( _Nationality, tea ) -> false;
-is_rule_4_ok( _Nationality, _Drink ) -> true.
-
 is_rule_5_ok( #house{colour=green},  #house{colour=white},  _House3,  _House4,  _House5  ) -> true;
 is_rule_5_ok( _House1,  #house{colour=green},  #house{colour=white},  _House4,  _House5  ) -> true;
 is_rule_5_ok( _House1,  _House2,  #house{colour=green},  #house{colour=white},  _House5  ) -> true;
 is_rule_5_ok( _House1,  _House2,  _House3,  #house{colour=green},  #house{colour=white}  ) -> true;
 is_rule_5_ok( _House1,  _House2,  _House3,  _House4,  _House5  ) -> false.
-
-is_rule_6_ok( coffe, green ) -> true;
-is_rule_6_ok( coffe, _Colour ) -> false;
-is_rule_6_ok( _Drink, green ) -> false;
-is_rule_6_ok( _Nationality, _Drink ) -> true.
-
-is_rule_7_ok( 'pall mall', birds ) -> true;
-is_rule_7_ok( 'pall mall', _Pet ) -> false;
-is_rule_7_ok( _Smoke, birds ) -> false;
-is_rule_7_ok( _Smoke, _Pet ) -> true.
-
-is_rule_8_ok( yellow, dunhill ) -> true;
-is_rule_8_ok( yellow, _Smoke ) -> false;
-is_rule_8_ok( _Colour, dunhill ) -> false;
-is_rule_8_ok( _Colour, _Smoke ) -> true.
-
-is_rule_9_ok( 3, milk ) -> true;
-is_rule_9_ok( 3, _Drink ) -> false;
-is_rule_9_ok( _Number, milk ) -> false;
-is_rule_9_ok( _Number, _Drink ) -> true.
-
-is_rule_10_ok( norveigan, 1 ) -> true;
-is_rule_10_ok( norveigan, _Number ) -> false;
-is_rule_10_ok( _Nationality, 1 ) -> false;
-is_rule_10_ok( _Nationality, _Number ) -> true.
 
 is_rule_11_ok( #house{smoke=blend},  #house{pet=cats},  _House3,  _House4,  _House5  ) -> true;
 is_rule_11_ok( _House1,  #house{smoke=blend},  #house{pet=cats},  _House4,  _House5  ) -> true;
@@ -131,16 +96,6 @@ is_rule_12_ok( _House1,  _House2,  #house{pet=horse},  #house{smoke=dunhill},  _
 is_rule_12_ok( _House1,  _House2,  _House3,  #house{pet=horse},  #house{smoke=dunhill}  ) -> true;
 is_rule_12_ok( _House1,  _House2,  _House3,  _House4,  _House5  ) -> false.
 
-is_rule_13_ok( 'blue master', beer ) -> true;
-is_rule_13_ok( 'blue master', _Drink ) -> false;
-is_rule_13_ok( _Smoke, beer ) -> false;
-is_rule_13_ok( _Smoke, _Drink ) -> true.
-
-is_rule_14_ok( german, prince ) -> true;
-is_rule_14_ok( german, _Smoke ) -> false;
-is_rule_14_ok( _Nationality, beer ) -> false;
-is_rule_14_ok( _Nationality, _Smoke ) -> true.
-
 is_rule_15_ok( #house{nationality=norveigan},  #house{colour=blue},  _House3,  _House4,  _House5  ) -> true;
 is_rule_15_ok( _House1,  #house{nationality=norveigan},  #house{colour=blue},  _House4,  _House5  ) -> true;
 is_rule_15_ok( _House1,  _House2,  #house{nationality=norveigan},  #house{colour=blue},  _House5  ) -> true;
@@ -160,4 +115,3 @@ is_rule_16_ok( _House1,  #house{drink=water},  #house{smoke=blend},  _House4,  _
 is_rule_16_ok( _House1,  _House2,  #house{drink=water},  #house{smoke=blend},  _House5  ) -> true;
 is_rule_16_ok( _House1,  _House2,  _House3,  #house{drink=water},  #house{smoke=blend}  ) -> true;
 is_rule_16_ok( _House1,  _House2,  _House3,  _House4,  _House5  ) -> false.
-
