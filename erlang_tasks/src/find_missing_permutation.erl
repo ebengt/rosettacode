@@ -14,4 +14,3 @@ existing_permutations() -> ["ABCD", "CABD", "ACDB", "DACB", "BCDA", "ACBD", "ADC
 
 is_different( [_H] ) -> true;
 is_different( [H | T] ) -> not lists:member(H, T) andalso is_different( T ).
-	
