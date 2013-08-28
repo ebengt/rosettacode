@@ -1,4 +1,5 @@
 -module( mean_time_of_day ).
+
 -export( [from_times/1, task/0] ).
 
 from_times( Times ) ->
