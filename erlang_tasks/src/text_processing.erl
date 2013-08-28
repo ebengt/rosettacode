@@ -1,8 +1,12 @@
 -module( text_processing ).
--export( [main/1] ).
+-export( [file_contents/1, main/1] ).
 
 -record( acc, {failed={"", 0, 0}, files=[], ok=0, total=0} ).
 
+file_contents( Name ) ->
+	{ok, Binary} = file:read_file( Name ),
+	[line_contents(X) || X <- binary:split(Binary, <<"\r\n">>, [global]), X =/= <<>>].
+	
 main( Files ) ->
       Acc = lists:foldl( fun file/2, #acc{}, Files ),
       {Failed_date, Failed, _Continuation} = Acc#acc.failed,
@@ -11,23 +15,23 @@ main( Files ) ->
 
 
 
-file( Name, #acc{files=Files}=Acc ) -> file_content( file:read_file(Name), Acc#acc{files=[Name | Files]} ).
+file( Name, #acc{files=Files}=Acc ) ->
+	try
+	Line_contents = file_contents( Name ),
+	lists:foldl( fun file_content_line/2, Acc#acc{files=[Name | Files]}, Line_contents )
 
-file_content( {ok, Binary}, Acc ) ->
-        lists:foldl( fun file_content_line/2, Acc, binary:split(Binary, <<"\r\n">>, [global]) );
-file_content( {error, Error}, #acc{files=[Name | Files]}=Acc ) ->
-        io:fwrite( "Error: Failed to open ~s: ~p~n", [Name, Error] ),
-        Acc#acc{files=Files}.
+	catch
+	_:Error ->
+		io:fwrite( "Error: Failed to read ~s: ~p~n", [Name, Error] ),
+		Acc
+	end.
 
-file_content_line( <<>>, Acc ) -> Acc; % Empty binary last from binary:split/3
-file_content_line( Line, #acc{failed=Failed, ok=Ok, total=Total}=Acc ) ->
-        [Date_binary | Rest] = binary:split( Line, <<"\t">>, [global] ),
-        Date = binary:bin_to_list( Date_binary ),
-        {_Previous, Value_flags} = lists:foldr( fun file_content_line_value_flag/2, {[], []}, Rest ), % Preserve order
-        New_failed = file_content_line_failed( Value_flags, Date, Failed ),
-        {Sum, Oks, Average} = file_content_line_oks_0( [X || {X, ok} <- Value_flags] ),
-        io:fwrite( "Line=~p\tRejected=~p\tAccepted=~p\tLine total=~.2f\tLine average=~.2f~n", [Date, erlang:length(Value_flags) - Oks, Oks, Sum, Average] ),
-        Acc#acc{failed=New_failed, ok=Ok + Oks, total=Total + Sum}.
+file_content_line( {Date, Value_flags}, #acc{failed=Failed, ok=Ok, total=Total}=Acc ) ->
+	New_failed = file_content_line_failed( Value_flags, Date, Failed ),
+	{Sum, Oks, Average} = file_content_line_oks_0( [X || {X, ok} <- Value_flags] ),
+	io:fwrite( "Line=~p\tRejected=~p\tAccepted=~p\tLine total=~.2f\tLine average=~.2f~n", [Date, erlang:length(Value_flags) - Oks, Oks, Sum, Average] ),
+	Acc#acc{failed=New_failed, ok=Ok + Oks, total=Total + Sum}.
+
 
 file_content_line_failed( [], Date, {_Failed_date, Failed, Acc} ) when Acc > Failed ->
         {Date, Acc, Acc};
@@ -55,3 +59,9 @@ file_content_line_value_flag( Binary, {[], Acc} ) ->
 file_content_line_value_flag( Binary, {[Flag], Acc} ) ->
         Value = erlang:list_to_float( binary:bin_to_list(Binary) ),
         {[], [{Value, Flag} | Acc]}.
+
+line_contents( Line ) ->
+	[Date_binary | Rest] = binary:split( Line, <<"\t">>, [global] ),
+	{_Previous, Value_flags} = lists:foldr( fun file_content_line_value_flag/2, {[], []}, Rest ), % Preserve order
+	{binary:bin_to_list( Date_binary ), Value_flags}.
+
