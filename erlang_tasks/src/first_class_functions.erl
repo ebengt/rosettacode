@@ -3,16 +3,14 @@
 -export( [task/0] ).
 
 task() ->
-	As = [fun math:sin/1, fun math:cos/1, fun cube/1],
-	X = 1.0,
-	Y = functional_composition( As, X ),
-	Bs = [fun cube_inverse/1, fun math:acos/1, fun math:asin/1],
-	io:fwrite( "Original: ~p Result ~p~n", [X, functional_composition(Bs, Y)] ).
+	As = [fun math:sin/1, fun math:cos/1, fun square/1],
+	Bs = [fun math:asin/1, fun math:acos/1, fun square_inverse/1],
+	[io:fwrite( "Value: 1.5 Result: ~p~n", [functional_composition([A, B], 1.5)]) || {A, B} <- lists:zip(As, Bs)].
 
 
-
-cube( X ) -> math:pow( X, 2 ).
-
-cube_inverse( X ) -> math:sqrt( X ).
 
 functional_composition( Funs, X ) -> lists:foldl( fun(F, Acc) -> F(Acc) end, X, Funs ).
+
+square( X ) -> math:pow( X, 2 ).
+
+square_inverse( X ) -> math:sqrt( X ).
