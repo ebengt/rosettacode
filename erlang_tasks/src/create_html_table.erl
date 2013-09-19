@@ -11,7 +11,7 @@ html_table( Table_options, Headers, Contents ) ->
 
 task() ->
 	Headers = [" ", "X", "Y", "Z"],
-	Contents = [[erlang:integer_to_list(X), radom(), radom(), radom()] || X <- lists:seq(1, 3)],
+	Contents = [[erlang:integer_to_list(X), random(), random(), random()] || X <- lists:seq(1, 3)],
 	external_format( html_table([{border, 1}, {cellpadding, 10}], Headers, Contents) ).
 
 
@@ -20,6 +20,6 @@ html_table_header( Items ) -> {tr, [], [{th, [], [X]} || X <- Items]}.
 
 html_table_record( Items ) -> {tr, [], [{td, [], [X]} || X <- Items]}.
 
-radom() -> erlang:integer_to_list( random:uniform(1000) ).
+random() -> erlang:integer_to_list( random:uniform(1000) ).
 
 remove_quoutes( String ) -> lists:flatten( string:tokens(String, "\"") ).
