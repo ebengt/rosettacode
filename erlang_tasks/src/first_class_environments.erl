@@ -34,7 +34,7 @@ hailstone_loop( stop, Print_pid, N, Acc ) ->
 	Environment = lists:flatten( io_lib:format("~11B:", [N]) ),
 	Sequence = lists:flatten( [io_lib:format("~4B", [X]) || X <- lists:reverse(Acc)] ),
 	Print_pid ! Environment ++ Sequence,
-	Count= erlang:get( count ),
+	Count = erlang:get( count ),
 	receive
 	{count, Pid} -> Pid ! {count, N, Count, erlang:self()}
 	end;
