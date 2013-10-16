@@ -1,0 +1,10 @@
+Description
+
+<lang>Pseudocode</lang>
+
+=={{header|C}}==
+<lang>printf(\"Hello world!\n\");</lang>
+<lang>printf(\"Hello world!\n\");</lang>
+
+=={{header|Perl}}==
+<lang Perl>print \"Hello world!\n\"</lang>

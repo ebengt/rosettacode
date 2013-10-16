@@ -1,16 +1,19 @@
 -module( rank_languages_by_popularity ).
 
--export( [task/0] ).
+-export( [rosettacode_languages/0, task/0] ).
 
 -record( print_fold, {place=0, place_step=1, previous_count=0} ).
 
+rosettacode_languages() ->
+	Category_programming_languages = find_unimplemented_tasks:rosetta_code_list_of( "Programming_Languages" ),
+	[X || "Category:" ++ X <- Category_programming_languages].
+
 task() ->
 	ok = find_unimplemented_tasks:init(),
-	Category_programming_languages = find_unimplemented_tasks:rosetta_code_list_of( "Programming_Languages" ),
-	Programming_languages = [X || "Category:" ++ X <- Category_programming_languages],
-%	{ok, {{_HTTP,200,"OK"}, _Headers, Body}} = httpc:request( "http://rosettacode.org/mw/index.php?title=Special:Categories&limit=5000" ),
-{ok, B} = file:read_file( "cat" ),
-Body = erlang:binary_to_list( B),
+	Programming_languages = rosettacode_languages(),
+	{ok, {{_HTTP,200,"OK"}, _Headers, Body}} = httpc:request( "http://rosettacode.org/mw/index.php?title=Special:Categories&limit=5000" ),
+%{ok, B} = file:read_file( "cat" ),
+%Body = erlang:binary_to_list( B),
 	Count_categories = lists:sort( [{Y, X} || {X, Y} <- category_counts(Body, []), lists:member(X, Programming_languages)] ),
 	lists:foldr( fun place_count_category_write/2, #print_fold{}, Count_categories ),
 ok.
