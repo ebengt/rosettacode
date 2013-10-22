@@ -9,7 +9,7 @@ rosettacode_languages() ->
 	[X || "Category:" ++ X <- Category_programming_languages].
 
 task() ->
-	ok = find_unimplemented_tasks:init(),
+	ok = find_unimplemented_tasks:init_http(),
 	Programming_languages = rosettacode_languages(),
 	{ok, {{_HTTP,200,"OK"}, _Headers, Body}} = httpc:request( "http://rosettacode.org/mw/index.php?title=Special:Categories&limit=5000" ),
 %{ok, B} = file:read_file( "cat" ),

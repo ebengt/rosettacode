@@ -1,14 +1,14 @@
 -module( find_unimplemented_tasks ).
 -include_lib( "xmerl/include/xmerl.hrl" ).
  
--export( [init/0, per_language/1, rosetta_code_list_of/1, rosetta_code_xmls_from_category/1] ).
+-export( [init_http/0, per_language/1, rosetta_code_list_of/1, rosetta_code_xmls_from_category/1] ).
 
-init() ->
+init_http() ->
 	application:start( inets ),
 	init_ericsson_proxy( is_ericsson() ).
 
 per_language( Language ) ->
-	ok = init(),
+	ok = init_http(),
 	Tasks = rosetta_code_list_of( "Programming_Tasks" ),
 	Uninplemented = Tasks -- rosetta_code_list_of( Language ),
 	io:fwrite( "Unimplemented total: ~p~n", [erlang:length(Uninplemented)] ),
