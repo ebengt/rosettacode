@@ -1,4 +1,4 @@
--module( strip_control_codes_and_extended_characters ).
+-module( strip_control_codes ).
 
 -export( [task/0] ).
 
