@@ -9,7 +9,7 @@ read( File ) ->
 
 task() ->
     Defaults = [{fullname, "Kalle"}, {favouritefruit, "apple"}, {needspeeling, false}, {seedsremoved, false}],
-    Options = read( "configuration_file" ) ++ Defaults,
+    Options = read( "priv/configuration_file" ) ++ Defaults,
     [io:fwrite("~p = ~p~n", [X, proplists:get_value(X, Options)]) || X <- [fullname, favouritefruit, needspeeling, seedsremoved, otherfamily]].
 
 
