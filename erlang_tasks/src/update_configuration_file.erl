@@ -21,13 +21,9 @@ enable( Option, Lines ) ->
 read( Name ) ->
 	{ok, Binary} = file:read_file( Name ),
 	Lines = [binary:bin_to_list(X) || X <- binary:split( Binary, <<"\n">>, [global] )],
-	Lines_no_white = [string:strip(X) || X <- Lines],
-	Lines_no_control = [strip_control(X) || X <- Lines_no_white],
-	Lines_no_consecutive_space = [string:join(string:tokens(X, " "), " ") || X <- Lines_no_control],
-	Lines_no_consecutive_semicolon = [strip_semicolon(X) || X <- Lines_no_consecutive_space],
-	Lines_no_empty = lists:filter( fun strip_empty/1, Lines_no_consecutive_semicolon ),
-	Lines_upper = [to_upper(X) || X <- Lines_no_empty],
-	lists:reverse( lists:foldl(fun remove_duplicates/2, [], Lines_upper) ).
+	Stripped_lines = lists:foldl( fun (F, Acc) -> [F(X) || X <- Acc] end, Lines, [fun string:strip/1, fun strip_control/1, fun strip_consequtive_spaces/1, fun strip_semicolon/1, fun to_upper/1] ),
+	Lines_no_empty = lists:filter( fun is_not_empty/1, Stripped_lines ),
+	lists:reverse( lists:foldl(fun remove_duplicates/2, [], Lines_no_empty) ).
 
 task() ->
 	Lines = read( "priv/configuration_file2" ),
@@ -62,6 +58,12 @@ enable_option( Option, String ) -> enable_option_same( string:str(String, "; " +
 enable_option_same( 1, "; " ++ String ) -> String;
 enable_option_same( _N, String ) -> String.
 
+is_not_empty( ";" ) -> false;
+is_not_empty( _String ) -> true.
+
+is_not_tab( $\t ) -> false;
+is_not_tab( _C ) -> true.
+
 is_semicolon( $; ) -> true;
 is_semicolon( _C ) -> false.
 
@@ -73,13 +75,11 @@ remove_duplicates( Line, Lines ) ->
 remove_duplicates( [], Line, Lines ) -> [Line | Lines];
 remove_duplicates( _Duplicates, _Line, Lines ) -> Lines.
 
+strip_consequtive_spaces( String ) -> lists:filter( fun is_not_tab/1, string:join(string:tokens(String, " "), " ") ).
+
 strip_control( "" ) -> "";
 strip_control( "#" ++ _T=String ) -> String;
-strip_control( String ) -> lists:filter( fun strip_control_codes:is_not_control_code_nor_extended_character/1, String ).
-
-strip_empty( ";" ) -> false;
-strip_empty( _String ) -> true.
-
+strip_control( String ) -> strip_control_codes:and_extended_characters( String ).
 
 strip_semicolon( ";" ++ _T=String ) -> ";" ++ lists:dropwhile( fun is_semicolon/1, String );
 strip_semicolon( String ) -> String.
