@@ -1,15 +1,15 @@
--module( configuration_file ).
+-module( read_configuration ).
 
--export( [read/1, task/0] ).
+-export( [file/1, task/0] ).
 
-read( File ) ->
+file( File ) ->
     {ok, Binary} = file:read_file( File ),
     Lines = [X || <<First:8, _T/binary>> = X <- binary:split(Binary, <<"\n">>, [global]), First =/= $#, First =/= $;],
     [option_from_binaries(binary:split(X, <<" ">>)) || X <- Lines].
 
 task() ->
     Defaults = [{fullname, "Kalle"}, {favouritefruit, "apple"}, {needspeeling, false}, {seedsremoved, false}],
-    Options = read( "priv/configuration_file" ) ++ Defaults,
+    Options = file( "priv/configuration_file" ) ++ Defaults,
     [io:fwrite("~p = ~p~n", [X, proplists:get_value(X, Options)]) || X <- [fullname, favouritefruit, needspeeling, seedsremoved, otherfamily]].
 
 
