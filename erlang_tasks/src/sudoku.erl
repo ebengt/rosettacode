@@ -34,6 +34,16 @@ task() ->
 
 
 
+bt( Grid ) -> bt_reject( is_not_allowed(Grid), Grid ).
+
+bt_accept( true, Board ) -> erlang:throw( {ok, Board} );
+bt_accept( false, Grid ) -> bt_loop( potentials_one_position(Grid), Grid ).
+
+bt_loop( {Position, Values}, Grid ) -> [bt( dict:store(Position, X, Grid) ) || X <- Values].
+
+bt_reject( true, _Grid ) -> backtrack;
+bt_reject( false, Grid ) -> bt_accept( is_all_correct(Grid), Grid ).
+
 display_row( Row, Grid ) ->
 	[display_row_group( X, Row, Grid ) || X <- [1, 4, 7]],
 	display_row_nl( Row ).
@@ -45,13 +55,25 @@ display_row_group( Start, Row, Grid ) ->
 display_row_nl( N ) when N =:= 3; N =:= 6; N =:= 9 -> io:nl(), io:nl();
 display_row_nl( _N ) -> io:nl().
 
-display_value( X, Y, Grid ) -> display_value( dict:find({X, Y}, Grid ) ).
+display_value( X, Y, Grid ) -> display_value( dict:find({X, Y}, Grid) ).
 
 display_value( error ) -> $.;
 display_value( {ok, Value} ) -> Value + $0.
 
-is_out_of_values( {_Position, []} ) -> true;
-is_out_of_values( _ ) -> false.
+is_all_correct( Grid ) -> dict:size( Grid ) =:= 81.
+
+is_not_allowed( Grid ) ->
+	is_not_allowed_rows( Grid )
+	orelse is_not_allowed_columns( Grid )
+	orelse is_not_allowed_groups( Grid ).
+
+is_not_allowed_columns( Grid ) -> lists:any( fun is_not_allowed_values/1, values_all_columns(Grid) ).
+
+is_not_allowed_groups( Grid ) -> lists:any( fun is_not_allowed_values/1, values_all_groups(Grid) ).
+
+is_not_allowed_rows( Grid ) -> lists:any( fun is_not_allowed_values/1, values_all_rows(Grid) ).
+
+is_not_allowed_values( Values ) -> erlang:length( Values ) =/= erlang:length( lists:usort(Values) ).
 
 group_positions( {X, Y} ) -> [{Colum, Row} || Colum <- group_positions_close(X), Row <- group_positions_close(Y)].
 
@@ -59,46 +81,76 @@ group_positions_close( N ) when N < 4 -> [1,2,3];
 group_positions_close( N ) when N < 7 -> [4,5,6];
 group_positions_close( _N ) -> [7,8,9].
 
-potentials( Grid ) ->
+positions_not_in_grid( Grid ) ->
 	Keys = dict:fetch_keys( Grid ),
-	Empties = [{X, Y} || X <- lists:seq(1, 9), Y <- lists:seq(1, 9), not lists:member({X, Y}, Keys)],
-	[potentials(X, Grid)  || X <- Empties].
+	[{X, Y} || X <- lists:seq(1, 9), Y <- lists:seq(1, 9), not lists:member({X, Y}, Keys)].
 
-potentials( {X, Y}, Grid ) ->
+potentials_one_position( Grid ) ->
+	[{_Shortest, Position, Values} | _T] = lists:sort( [{erlang:length(Values), Position, Values} || {Position, Values} <- potentials( Grid )] ),
+	{Position, Values}.
+
+potentials( Grid ) -> lists:flatten( [potentials(X, Grid)  || X <- positions_not_in_grid(Grid)] ).
+
+potentials( Position, Grid ) ->
+	Useds = potentials_used_values( Position, Grid ),
+	{Position, [Value || Value <- lists:seq(1, 9) -- Useds]}.
+
+potentials_used_values( {X, Y}, Grid ) ->
 	Row_positions = [{Row, Y} || Row <- lists:seq(1, 9), Row =/= X],
 	Row_values = potentials_values( Row_positions, Grid ),
 	Column_positions = [{X, Column} || Column <- lists:seq(1, 9), Column =/= Y],
 	Column_values = potentials_values( Column_positions, Grid ),
 	Group_positions = lists:delete( {X, Y}, group_positions({X, Y}) ),
 	Group_values = potentials_values( Group_positions, Grid ),
-	Useds = Row_values ++ Column_values ++ Group_values,
-	{{X, Y}, lists:seq(1, 9) -- Useds}.
+	Row_values ++ Column_values ++ Group_values.
 
 potentials_values( Keys, Grid ) ->
 	Row_values_unfiltered = [dict:find(X, Grid) || X <- Keys],
 	[Value || {ok, Value} <- Row_values_unfiltered].
 
-solve_all_sure( Grid ) -> solve_all_sure( solve_all_sure_value(Grid), Grid ).
+values_all_columns( Grid ) -> [values_all_columns(X, Grid) || X <- lists:seq(1, 9)].
+
+values_all_columns( X, Grid ) ->
+	Positions = [{X, Y} || Y <- lists:seq(1, 9)],
+	potentials_values( Positions, Grid ).
+
+values_all_groups( Grid ) ->
+	[G123, G456, G789] = [values_all_groups(X, Grid) || X <- [1, 4, 7]],
+	[G1,G2,G3] = G123,
+	[G4,G5,G6] = G456,
+	[G7,G8,G9] = G789,
+	[G1,G2,G3,G4,G5,G6,G7,G8,G9].
+
+values_all_groups( X, Grid ) ->[values_all_groups(X, X_offset, Grid) || X_offset <- [X, X+1, X+2]].
+
+values_all_groups( _X, X_offset, Grid ) ->
+	Positions = [{X_offset, Y_offset} || Y_offset <- group_positions_close(X_offset)],
+	potentials_values( Positions, Grid ).
+
+values_all_rows( Grid ) ->[values_all_rows(Y, Grid) || Y <- lists:seq(1, 9)].
+
+values_all_rows( Y, Grid ) ->
+	Positions = [{X, Y} || X <- lists:seq(1, 9)],
+	potentials_values( Positions, Grid ).
+
+solve_all_sure( Grid ) -> solve_all_sure( solve_all_sure_values(Grid), Grid ).
 
 solve_all_sure( [], Grid ) -> Grid;
 solve_all_sure( Sures, Grid ) -> solve_all_sure( lists:foldl(fun solve_all_sure_store/2, Grid, Sures) ).
 
-solve_all_sure_value( Grid ) -> [{Position, Value} || {Position, [Value]} <- potentials(Grid)].
+solve_all_sure_values( Grid ) -> [{Position, Value} || {Position, [Value]} <- potentials(Grid)].
 
 solve_all_sure_store( {Position, Value}, Acc ) -> dict:store( Position, Value, Acc ).
 
 solve_unsure( [], Grid ) -> Grid;
-solve_unsure( [{Position, Values} | T], Grid ) -> solve_unsure_potential( Position, Values, T, Grid ).
+solve_unsure( _Potentials, Grid ) ->
+    try
+    bt( Grid )
 
-solve_unsure_potential( Position, [Value], [], Grid ) -> dict:store( Position, Value, Grid );
-solve_unsure_potential( Position, [Value | T], Potentials, Grid ) ->
-	New_potentials = [{Potential_position, lists:delete(Value, Values)} || {Potential_position, Values} <- Potentials],
-	Is_out_of_values = lists:any( fun is_out_of_values/1, New_potentials ),
-	solve_unsure_potential_out_of_values( Is_out_of_values, Position, Value, T, Potentials, New_potentials, Grid ).
+    catch
+    _:{ok, Board} -> Board
 
-solve_unsure_potential_out_of_values( true, Position, _Value, Values, Potentials, _New_potentials, Grid ) ->
-	solve_unsure_potential( Position, Values, Potentials, Grid );
-solve_unsure_potential_out_of_values( false, Position, Value, _Values, _Potentials, [{Next_position, Values} | T], Grid ) -> solve_unsure_potential( Next_position, Values, T, dict:store(Position, Value, Grid) ).
+    end.
 
 task( Knowns ) ->
 	io:fwrite( "Start~n" ),
